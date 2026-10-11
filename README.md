@@ -77,3 +77,30 @@ A real-time chat room (`# degen-lounge`) is available in the Chat tab. It works 
 5. Redeploy.
 
 The Chat tab loads the last 100 messages on open and receives new ones live. Presence shows online users.
+
+## Accounts, risk, alerts, payments (v1.2)
+
+### Accounts & server data
+- Supabase Auth ready (profiles auto-created on signup).
+- Server-side watchlists (`/api/watchlist`) and alerts (`/api/alerts`) when `SUPABASE_SERVICE_ROLE_KEY` is set.
+- Run `supabase/schema.sql` in addition to `messages.sql`.
+
+### Risk scanner
+- `/api/risk?chain=&address=` returns an **evidence score** (liquidity, volume, age, socials, boosts).
+- Explicitly labeled as not a safety guarantee.
+- Rate-limited.
+
+### Alerts
+- Create local alerts from the detail panel or Alerts tab.
+- Server persistence activates with accounts + service role.
+
+### Payments
+- `/api/checkout` creates a Stripe Checkout session (30/90/365-day passes).
+- `/api/webhook` grants entitlements on `checkout.session.completed`.
+- Requires Stripe keys. Client never grants paid access.
+
+### Rate limiting
+- In-memory limiter on risk, watchlist, and alerts routes (replace with Redis for scale).
+
+### Android
+- Capacitor config present. For Play Store: add Android project, point to hosted backend, sign, and complete data safety form.

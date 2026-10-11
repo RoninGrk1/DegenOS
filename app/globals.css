@@ -65,3 +65,14 @@
 .chat-setup pre{background:#080a08;border:1px solid #2a3a2a;padding:10px;border-radius:6px;font-size:11px;overflow:auto;color:#9cff71}
 .chat-note{font-size:11px;color:#9b8c56}
 .chat-local-preview{display:flex;flex-direction:column;flex:1}
+
+/* Risk + Alerts */
+.risk-section,.alerts-section{margin:12px 0 24px}
+.risk-panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.risk-input-row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.risk-input{background:#0d110e;border:1px solid #2a3a2a;border-radius:6px;padding:8px 10px;color:var(--text);flex:1;min-width:140px}
+.risk-result{margin-top:14px}
+.risk-result pre{background:#080a08;border:1px solid #2a3a2a;padding:10px;border-radius:6px;font-size:11px;overflow:auto;color:#9cff71;max-height:200px}
+.alerts-list{display:flex;flex-direction:column;gap:8px}
+.alert-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.alert-card small{color:#778177;font-size:10px}

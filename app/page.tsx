@@ -64,6 +64,9 @@ export default function Home() {
   const [socialFeed, setSocialFeed] = useState<any[]>([]);
   const [socialLoading, setSocialLoading] = useState(false);
   const [selected, setSelected] = useState<Pair | null>(null);
+  const [riskResult, setRiskResult] = useState<any>(null);
+  const [riskLoading, setRiskLoading] = useState(false);
+  const [alerts, setAlerts] = useState<any[]>([]);
 
   useEffect(() => {
     try {
@@ -110,6 +113,26 @@ export default function Home() {
     });
   };
 
+  
+  const checkRisk = async (p: Pair) => {
+    if (!p.chainId || !p.baseToken?.address) return;
+    setRiskLoading(true);
+    setRiskResult(null);
+    try {
+      const r = await fetch(`/api/risk?chain=${encodeURIComponent(p.chainId)}&address=${encodeURIComponent(p.baseToken.address)}`);
+      const j = await r.json();
+      setRiskResult(j);
+    } catch { setRiskResult({ error: 'Unavailable' }); }
+    setRiskLoading(false);
+  };
+
+  const createAlert = async (p: Pair, condition: string, threshold?: number) => {
+    // Client-side placeholder; server route exists for when auth + service role are set
+    const local = { id: Date.now().toString(36), symbol: p.baseToken?.symbol, condition, threshold, created: new Date().toISOString() };
+    setAlerts(a => [local, ...a]);
+    setNotice(`Alert created locally: ${p.baseToken?.symbol} ${condition}. Server sync activates with accounts.`);
+  };
+
   const share = async (p: Pair) => {
     const text = `${p.baseToken?.symbol || 'Token'} on ${p.chainId || 'chain'} — $${p.priceUsd || '?'} | DegenOS research`;
     const url = p.url || `https://dexscreener.com/${p.chainId}/${p.pairAddress || p.baseToken?.address}`;
@@ -147,7 +170,7 @@ export default function Home() {
         <div className="nav-label">TERMINAL</div>
         <nav>{nav.map(n => (
           <button key={n.name} onClick={() => { setTab(n.name); setShowSaved(n.name === 'Watchlist'); setMobileNav(false); }} className={'nav-item ' + (tab === n.name ? 'active' : '')}>
-            <n.icon size={17}/><span>{n.name}</span>{n.name === 'Alerts' && <span className="nav-tag">SOON</span>}
+            <n.icon size={17}/><span>{n.name}</span>
           </button>
         ))}</nav>
         <div className="nav-label tools-label">TOOLS</div>
@@ -279,6 +302,47 @@ export default function Home() {
             </div>
           )}
 
+          {tab === 'Risk scanner' && (
+            <div className="risk-section">
+              <div className="section-heading"><div><div className="eyebrow small"><span className="eyebrow-line"/> RISK SCANNER</div><h2>Evidence-led checks</h2><p>Scores reflect observable signals (liquidity, volume, age, socials). Not a safety guarantee.</p></div></div>
+              <div className="risk-panel">
+                <p>Select a token from Discover and open its detail panel, or enter an address below.</p>
+                <div className="risk-input-row">
+                  <input placeholder="Chain (e.g. solana)" id="risk-chain" className="risk-input"/>
+                  <input placeholder="Token address" id="risk-addr" className="risk-input"/>
+                  <button className="detail-btn" onClick={() => {
+                    const c = (document.getElementById('risk-chain') as HTMLInputElement)?.value;
+                    const a = (document.getElementById('risk-addr') as HTMLInputElement)?.value;
+                    if (c && a) checkRisk({ chainId: c, baseToken: { address: a } } as Pair);
+                  }}>Check</button>
+                </div>
+                {riskLoading && <div className="notice">Checking…</div>}
+                {riskResult && (
+                  <div className="risk-result">
+                    <div className="score-pill" style={{ fontSize: 18, padding: '6px 12px' }}>{riskResult.score ?? '—'}</div>
+                    <pre>{JSON.stringify(riskResult.evidence || riskResult, null, 2)}</pre>
+                    <p className="chat-note">{riskResult.disclaimer}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {tab === 'Alerts' && (
+            <div className="alerts-section">
+              <div className="section-heading"><div><div className="eyebrow small"><span className="eyebrow-line"/> ALERTS</div><h2>Watch conditions</h2><p>Create price/volume alerts. Delivery activates with accounts + backend.</p></div></div>
+              {alerts.length === 0 && <div className="notice">No alerts yet. Open a token and use the detail panel, or create one here after selecting a pair.</div>}
+              <div className="alerts-list">
+                {alerts.map(a => (
+                  <div key={a.id} className="alert-card">
+                    <strong>{a.symbol}</strong> · {a.condition} {a.threshold != null ? `@ ${a.threshold}` : ''}
+                    <small>{new Date(a.created).toLocaleString()}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="bottom-grid">
             <div className="feature-card"><div className="feature-icon green"><Sparkles size={18}/></div><div><h3>Social utility scores.</h3><p>Tokens are scored on social presence (X, Telegram, websites, boosts). Higher scores mean richer community signals — not safety.</p><button onClick={() => setTab('Social')}>Open social feed <span>→</span></button></div></div>
             <div className="feature-card"><div className="feature-icon purple"><Share2 size={18}/></div><div><h3>Share research instantly.</h3><p>Copy or native-share any pair with price and DexScreener link. Your local reactions stay private on this device.</p><button onClick={() => setNotice('Select a token and use the share button in the table.')}>How sharing works <span>→</span></button></div></div>
@@ -309,6 +373,8 @@ export default function Home() {
             <div className="detail-actions">
               <button onClick={() => toggle(selected)} className="detail-btn"><Bookmark size={14}/> {saved.includes((selected.chainId || '') + ':' + (selected.pairAddress || selected.baseToken?.address || '')) ? 'Saved' : 'Watch'}</button>
               <button onClick={() => share(selected)} className="detail-btn"><Share2 size={14}/> Share</button>
+              <button onClick={() => { setTab('Risk scanner'); checkRisk(selected); setSelected(null); }} className="detail-btn"><ShieldCheck size={14}/> Risk</button>
+              <button onClick={() => createAlert(selected, 'price_above', Number(selected.priceUsd) * 1.1)} className="detail-btn"><Bell size={14}/> Alert +10%</button>
               <button onClick={() => react(selected, 'bull')} className={'detail-btn ' + (reactions[(selected.chainId || '') + ':' + (selected.pairAddress || selected.baseToken?.address || '')] === 'bull' ? 'active' : '')}><ThumbsUp size={14}/> Bull</button>
               <button onClick={() => react(selected, 'bear')} className={'detail-btn ' + (reactions[(selected.chainId || '') + ':' + (selected.pairAddress || selected.baseToken?.address || '')] === 'bear' ? 'active' : '')}><ThumbsDown size={14}/> Bear</button>
             </div>
