@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { Activity, ArrowDownRight, ArrowUpRight, Bell, Bookmark, Check, ChevronDown, CircleHelp, Command, ExternalLink, Filter, Gauge, Globe2, LayoutDashboard, Menu, Search, ShieldAlert, ShieldCheck, Sparkles, Star, Wallet, X, Zap, Share2, MessageCircle, Twitter, Send, Globe, Heart, ThumbsUp, ThumbsDown } from 'lucide-react';
+import ChatRoom from './components/ChatRoom';
 
 type Social = { platform?: string; handle?: string };
 type Pair = {
@@ -123,6 +124,7 @@ export default function Home() {
     { name: 'Overview', icon: LayoutDashboard },
     { name: 'Discover', icon: Search },
     { name: 'Social', icon: Sparkles },
+    { name: 'Chat', icon: MessageCircle },
     { name: 'Watchlist', icon: Bookmark },
     { name: 'Risk scanner', icon: ShieldCheck },
     { name: 'Alerts', icon: Bell },
@@ -267,6 +269,13 @@ export default function Home() {
                   {item.url && <a href={item.url} target="_blank" rel="noreferrer" className="social-view">View on DexScreener →</a>}
                 </div>
               ))}
+            </div>
+          )}
+
+          {tab === 'Chat' && (
+            <div className="chat-section">
+              <div className="section-heading"><div><div className="eyebrow small"><span className="eyebrow-line"/> SOCIAL CHAT</div><h2>Degen lounge</h2><p>Real-time chat room for the community. Works in the website and the installed PWA/app.</p></div></div>
+              <ChatRoom />
             </div>
           )}
 

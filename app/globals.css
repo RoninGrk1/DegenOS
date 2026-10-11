@@ -37,3 +37,31 @@
 .asset-cell{display:flex;align-items:center;gap:8px}
 .asset-icon{width:28px;height:28px;border-radius:6px;background:#1a2b19;display:grid;place-items:center;font-weight:700;color:#8bff51;font-size:12px}
 .muted{color:#778177}
+
+/* Chat room */
+.chat-section{margin:12px 0 24px}
+.chat-shell{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;min-height:420px;max-height:70vh}
+.chat-header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);background:#080a08;font-size:12px}
+.chat-status{display:flex;align-items:center;gap:6px;color:#9cff71}
+.chat-status .online{color:#5de72d;fill:#5de72d}
+.chat-status .offline{color:#778177}
+.chat-room-name{font-family:var(--mono);color:#8bff51;font-size:11px}
+.chat-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.chat-empty{color:#778177;text-align:center;margin-top:40px;font-size:13px}
+.chat-msg{display:flex;flex-direction:column;max-width:85%;align-self:flex-start}
+.chat-msg.mine{align-self:flex-end;align-items:flex-end}
+.chat-user{font-size:10px;color:#8bff51;font-weight:600;margin-bottom:2px}
+.chat-text{background:#151d17;border:1px solid #2a3a2a;border-radius:8px;padding:7px 10px;font-size:13px;line-height:1.4}
+.chat-msg.mine .chat-text{background:#1a2b19;border-color:#3a5a3a}
+.chat-time{font-size:9px;color:#556055;margin-top:2px}
+.chat-input-row{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:#080a08}
+.chat-input-row input{flex:1;background:#0d110e;border:1px solid #2a3a2a;border-radius:6px;padding:8px 10px;color:var(--text);outline:none}
+.chat-input-row input:focus{border-color:#72ff35}
+.chat-send{width:38px;height:38px;display:grid;place-items:center;background:#1a2b19;border:1px solid #3a5a3a;border-radius:6px;color:#8bff51}
+.chat-send:disabled{opacity:.4}
+.chat-setup{padding:16px;border-bottom:1px solid var(--line)}
+.chat-setup h3{margin:0 0 8px;font-size:16px}
+.chat-setup p,.chat-setup ol{font-size:12px;color:#b0b8b0;margin:6px 0}
+.chat-setup pre{background:#080a08;border:1px solid #2a3a2a;padding:10px;border-radius:6px;font-size:11px;overflow:auto;color:#9cff71}
+.chat-note{font-size:11px;color:#9b8c56}
+.chat-local-preview{display:flex;flex-direction:column;flex:1}
