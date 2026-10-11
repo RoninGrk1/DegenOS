@@ -48,3 +48,15 @@ See `.env.example`. Do not commit real secrets. Before payments go live, configu
 
 ## Data and safety
 Market observations are not financial advice. Data can be delayed, incomplete, or manipulated. A risk report is not proof that a token is safe. DegenOS should never collect seed phrases or private keys.
+
+## Social utility upgrade (v1.1)
+
+- **Social scores**: Every pair shows a 0–100 social utility score based on X/Telegram presence, websites, and boosts.
+- **Social icons**: Direct links to Twitter/X, Telegram, Discord, and websites when available in DexScreener data.
+- **Share**: Native share or clipboard copy of token + price + DexScreener link.
+- **Social feed**: Dedicated Social tab loads latest token profiles (descriptions + links) from DexScreener.
+- **Local reactions**: Bull / Bear tags stored only in localStorage (device-private).
+- **Detail panel**: Click any row for expanded socials, score, watch, share, and reactions.
+- **New API**: `/api/social` aggregates latest profiles and boosted tokens.
+
+Social data is community-provided and unverified. Scores are informational only — not a safety or quality rating.
