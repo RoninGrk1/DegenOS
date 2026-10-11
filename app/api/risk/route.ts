@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const runtime = 'edge';
 import { rateLimit } from '@/lib/ratelimit';
 
 export async function GET(req: NextRequest) {

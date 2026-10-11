@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const runtime = 'edge';
 
 // Stripe Checkout session creator.
 // Requires STRIPE_SECRET_KEY. Returns a session URL when configured.

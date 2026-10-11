@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+export const runtime = 'edge';
 export const revalidate = 45;
 const FALLBACK = [
  {chainId:'solana',dexId:'demo',pairAddress:'demo-1',baseToken:{address:'DEMO1',name:'Demo Token',symbol:'DEMO'},quoteToken:{symbol:'SOL'},priceUsd:'0.0421',priceChange:{h24:12.4},volume:{h24:182000},liquidity:{usd:94000},fdv:4200000,pairCreatedAt:Date.now()-86400000*8,url:'https://dexscreener.com/'},

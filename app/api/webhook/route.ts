@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const runtime = 'edge';
 import { createClient } from '@supabase/supabase-js';
 
 // Stripe webhook. Verifies signature when STRIPE_WEBHOOK_SECRET is set.

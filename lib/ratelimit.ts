@@ -1,5 +1,7 @@
-// Simple in-memory rate limiter for API routes (per IP).
-// For production scale, replace with Upstash Redis or similar.
+// Simple in-memory rate limiter.
+// WARNING: On Cloudflare Workers this Map is per-isolate and resets frequently.
+// It provides only weak protection. For production use Cloudflare Rate Limiting
+// bindings, Durable Objects, or an external store (Upstash Redis).
 const buckets = new Map<string, { count: number; reset: number }>();
 
 export function rateLimit(key: string, limit = 30, windowMs = 60_000): { ok: boolean; remaining: number } {
