@@ -5,12 +5,15 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 type Message = { id: string; user: string; text: string; ts: number };
 
+const ROOM = 'degen-lounge';
+
 export default function ChatRoom() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [username, setUsername] = useState('');
   const [online, setOnline] = useState(1);
   const [connected, setConnected] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<any>(null);
 
@@ -20,16 +23,51 @@ export default function ChatRoom() {
     localStorage.setItem('degenos-username', saved);
   }, []);
 
+  // Load history + subscribe
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase || !username) return;
 
+    let mounted = true;
+    setLoadingHistory(true);
+
+    // Load last 100 messages
+    supabase
+      .from('messages')
+      .select('id, username, text, created_at')
+      .eq('room', ROOM)
+      .order('created_at', { ascending: false })
+      .limit(100)
+      .then(({ data, error }) => {
+        if (!mounted) return;
+        if (!error && data) {
+          const history: Message[] = data.reverse().map(row => ({
+            id: row.id,
+            user: row.username,
+            text: row.text,
+            ts: new Date(row.created_at).getTime(),
+          }));
+          setMessages(history);
+        }
+        setLoadingHistory(false);
+      });
+
+    // Realtime channel: presence + new messages
     const channel = supabase.channel('degenos-lounge', {
       config: { presence: { key: username } },
     });
 
     channel
-      .on('broadcast', { event: 'message' }, ({ payload }) => {
-        setMessages(prev => [...prev.slice(-99), payload as Message]);
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `room=eq.${ROOM}` }, (payload) => {
+        const row = payload.new as any;
+        setMessages(prev => {
+          if (prev.some(m => m.id === row.id)) return prev;
+          return [...prev.slice(-199), {
+            id: row.id,
+            user: row.username,
+            text: row.text,
+            ts: new Date(row.created_at).getTime(),
+          }];
+        });
       })
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
@@ -43,7 +81,11 @@ export default function ChatRoom() {
       });
 
     channelRef.current = channel;
-    return () => { supabase.removeChannel(channel); };
+
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
   }, [username]);
 
   useEffect(() => {
@@ -52,48 +94,51 @@ export default function ChatRoom() {
 
   const send = async () => {
     const text = input.trim();
-    if (!text || !username) return;
-    const msg: Message = { id: Date.now().toString(36), user: username, text, ts: Date.now() };
+    if (!text || !username || !supabase) return;
 
-    if (channelRef.current && connected) {
-      await channelRef.current.send({ type: 'broadcast', event: 'message', payload: msg });
-    } else {
-      // Local preview when Supabase not connected
-      setMessages(prev => [...prev, msg]);
-    }
     setInput('');
+
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({ room: ROOM, username, text })
+      .select('id, username, text, created_at')
+      .single();
+
+    if (error) {
+      console.error('Send failed', error);
+      // Optimistic fallback only if insert fails and not configured
+      return;
+    }
+
+    // Optimistic add (Realtime will also deliver it; dedupe by id)
+    if (data) {
+      setMessages(prev => {
+        if (prev.some(m => m.id === data.id)) return prev;
+        return [...prev, {
+          id: data.id,
+          user: data.username,
+          text: data.text,
+          ts: new Date(data.created_at).getTime(),
+        }];
+      });
+    }
   };
 
   if (!isSupabaseConfigured) {
     return (
       <div className="chat-shell">
         <div className="chat-setup">
-          <h3>Social chat room</h3>
-          <p>Real-time multi-user chat is ready. Connect a free Supabase project to enable it for everyone.</p>
+          <h3>Social chat room + history</h3>
+          <p>Real-time multi-user chat with persistent message history. Connect Supabase and run the schema.</p>
           <ol>
             <li>Create a project at <a href="https://supabase.com" target="_blank" rel="noreferrer">supabase.com</a></li>
-            <li>Enable Realtime (default on)</li>
-            <li>Add these env vars:</li>
+            <li>Run <code>supabase/messages.sql</code> in the SQL Editor</li>
+            <li>Enable Realtime on the <code>messages</code> table (Database → Replication)</li>
+            <li>Add env vars:</li>
           </ol>
           <pre>NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...</pre>
-          <p className="chat-note">Until then, messages stay local to this browser only.</p>
-        </div>
-        <div className="chat-local-preview">
-          <div className="chat-header"><Users size={16}/> Local preview · 1 online</div>
-          <div className="chat-messages">
-            {messages.map(m => (
-              <div key={m.id} className={'chat-msg ' + (m.user === username ? 'mine' : '')}>
-                <span className="chat-user">{m.user}</span>
-                <span className="chat-text">{m.text}</span>
-              </div>
-            ))}
-            <div ref={bottomRef}/>
-          </div>
-          <div className="chat-input-row">
-            <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Type a message…" maxLength={280}/>
-            <button onClick={send} className="chat-send"><Send size={16}/></button>
-          </div>
+          <p className="chat-note">Until configured, chat is unavailable.</p>
         </div>
       </div>
     );
@@ -110,7 +155,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...</pre>
         <div className="chat-room-name"># degen-lounge</div>
       </div>
       <div className="chat-messages">
-        {messages.length === 0 && <div className="chat-empty">No messages yet. Say something.</div>}
+        {loadingHistory && <div className="chat-empty">Loading history…</div>}
+        {!loadingHistory && messages.length === 0 && <div className="chat-empty">No messages yet. Say something.</div>}
         {messages.map(m => (
           <div key={m.id} className={'chat-msg ' + (m.user === username ? 'mine' : '')}>
             <span className="chat-user">{m.user}</span>
@@ -121,8 +167,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...</pre>
         <div ref={bottomRef}/>
       </div>
       <div className="chat-input-row">
-        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder={`Message as ${username}…`} maxLength={280}/>
-        <button onClick={send} disabled={!input.trim()} className="chat-send"><Send size={16}/></button>
+        <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder={`Message as ${username}…`} maxLength={500}/>
+        <button onClick={send} disabled={!input.trim() || !connected} className="chat-send"><Send size={16}/></button>
       </div>
     </div>
   );

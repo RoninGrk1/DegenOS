@@ -67,14 +67,13 @@ A real-time chat room (`# degen-lounge`) is available in the Chat tab. It works 
 
 ### Setup (free)
 1. Create a Supabase project at [supabase.com](https://supabase.com).
-2. Copy the Project URL and anon/public key.
-3. Add them as environment variables:
+2. Open the SQL Editor and run the contents of `supabase/messages.sql` (creates the `messages` table + RLS policies).
+3. In Database → Replication, add the `messages` table to the Realtime publication.
+4. Copy the Project URL and anon/public key into environment variables:
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
    ```
-4. Redeploy. Realtime Broadcast is enabled by default — no database tables required for the basic lounge.
+5. Redeploy.
 
-Until configured, the chat shows a local preview (messages stay in the browser only).
-
-Presence shows online users. Messages are ephemeral (broadcast, not persisted) unless you later add a messages table.
+The Chat tab loads the last 100 messages on open and receives new ones live. Presence shows online users.
